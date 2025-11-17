@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Representa | Painel e Ferramentas</title>
+    <!-- Carrega o Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Configuração de fonte padrão "Inter" e cores */
+        :root {
+            --primary-color: #4f46e5; /* Indigo-600 */
+            --secondary-color: #818cf8; /* Indigo-400 */
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc; /* Slate-50 */
+        }
+        .btn-primary {
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+        }
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+        }
+        .sidebar {
+            width: 16rem; /* Tailwind w-64 */
+            min-height: 100vh;
+            transition: transform 0.3s ease-in-out;
+        }
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-16rem);
+                position: fixed;
+                z-index: 40;
+            }
+            .sidebar.open {
+                transform: translateX(0);
+            }
+        }
+    </style>
+</head>
+<body class="antialiased flex flex-col min-h-screen">
+
+    <!-- Container Principal do App (Renderiza as Views) -->
+    <div id="app-container" class="flex-grow">
+        <!-- O conteúdo dinâmico será renderizado aqui pelo JS -->
+    </div>
+
+    <!-- Modal de Mensagem Simples (em vez de alert()) -->
+    <div id="message-box" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-[100]">
+        <div class="bg-white p-6 rounded-lg shadow-2xl max-w-sm mx-4 text-center">
+            <p id="message-text" class="text-lg font-medium text-gray-800 mb-4"></p>
+            <button onclick="closeMessage()" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition duration-150">Fechar</button>
+        </div>
+    </div>
+
+    <script>
+        // Variável global para rastrear a visualização atual. Começa no Dashboard.
+        let currentView = 'dashboard';
+        const appContainer = document.getElementById('app-container');
+        const LOGIN_URL = 'login.html'; // Caminho para a nova tela de login
+
+        // --- Funções de Utilitário ---
+
+        function showMessage(text) {
+            document.getElementById('message-text').textContent = text;
+            document.getElementById('message-box').classList.remove('hidden');
+            document.getElementById('message-box').classList.add('flex');
+        }
+
+        function closeMessage() {
+            document.getElementById('message-box').classList.add('hidden');
+            document.getElementById('message-box').classList.remove('flex');
+        }
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            if (sidebar) {
+                sidebar.classList.toggle('open');
+            }
+        }
+
+        function changeView(viewName) {
+            currentView = viewName;
+            renderApp();
+            // Fecha a sidebar no mobile após a navegação
+            const sidebar = document.getElementById('sidebar');
+            if (sidebar && sidebar.classList.contains('open')) {
+                 toggleSidebar();
+            }
+        }
+
+        // --- Estrutura Comum (Navbar e Sidebar) ---
+
+        function getCommonLayout(contentHtml) {
+            // Este layout é obrigatório, pois estamos sempre logados.
+            const activeClass = (view) => currentView === view ? 'bg-indigo-700 text-white' : 'text-indigo-200 hover:bg-indigo-600';
+            
+            const layout = `
+                <!-- Navbar -->
+                <header class="bg-white shadow-md sticky top-0 z-30">
+                    <div class="max-w-full mx-auto px-4 sm:px-6 lg:px-8 py-3 flex justify-between items-center">
+                        <div class="flex items-center space-x-4">
+                            <!-- Botão Mobile para Sidebar -->
+                            <button onclick="toggleSidebar()" class="md:hidden p-2 text-indigo-600 hover:text-indigo-800 rounded-lg">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                            </button>
+                            <span class="text-xl font-bold text-gray-800">Painel do Representa</span>
+                        </div>
+                        
+                        <div class="flex items-center space-x-4">
+                             <span class="text-sm font-medium text-gray-600 hidden sm:inline">Bem-vindo(a), Representante!</span>
+                            <a href="${LOGIN_URL}" title="Sair" class="text-sm font-semibold p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition duration-150">
+                                Sair
+                            </a>
+                        </div>
+                    </div>
+                </header>
+
+                <div class="flex flex-1">
+                    <!-- Sidebar -->
+                    <aside id="sidebar" class="sidebar bg-indigo-800 text-white shadow-xl md:translate-x-0">
+                        <div class="p-6 text-2xl font-bold border-b border-indigo-700">
+                             <a href="#" onclick="changeView('dashboard')" class="flex items-center">
+                                 <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-5a2 2 0 00-2-2H9.842a5 5 0 01-4.9-2.756L2 10m9 0a4 4 0 11-8 0 4 4 0 018 0zm1.968 1.115a3 3 0 113.896 3.896M18 13.968a3 3 0 113.896 3.896"></path></svg>
+                                Representa
+                             </a>
+                        </div>
+                        <nav class="mt-4 space-y-2 px-4">
+                            <a href="#" onclick="changeView('dashboard')" class="flex items-center p-3 rounded-xl ${activeClass('dashboard')}">
+                                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3"></path></svg>
+                                Dashboard
+                            </a>
+                            <a href="#" onclick="changeView('send-message')" class="flex items-center p-3 rounded-xl ${activeClass('send-message')}">
+                                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 20h9M18 10V5a2 2 0 00-2-2H8a2 2 0 00-2 2v5a2 2 0 012 2v5a2 2 0 002 2h2m-4-8a1 1 0 011-1h2a1 1 0 011 1m-4 0v2m4-2v2"></path></svg>
+                                Enviar Mensagem
+                            </a>
+                            <a href="#" onclick="changeView('add-contact')" class="flex items-center p-3 rounded-xl ${activeClass('add-contact')}">
+                                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path></svg>
+                                Adicionar Contato
+                            </a>
+                            <a href="#" onclick="showMessage('Funcionalidade de Feedback em breve!')" class="flex items-center p-3 rounded-xl text-indigo-200 hover:bg-indigo-600">
+                                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.27a11.954 11.954 0 01-1.29 2.22c-.628.69-1.325 1.255-2.083 1.688m-6.427 0c-.758-.433-1.455-.998-2.083-1.688a11.954 11.954 0 01-1.29-2.22m1.066-1.554a9 9 0 1010.868 0"></path></svg>
+                                Visualizar Feedback
+                            </a>
+                        </nav>
+                    </aside>
+
+                    <!-- Main Content -->
+                    <main class="flex-1 p-4 md:p-8 overflow-y-auto">
+                        ${contentHtml}
+                    </main>
+                </div>
+            `;
+            return layout;
+        }
+
+
+        // --- Views (Telas) ---
+
+        function renderDashboard() {
+            const content = `
+                <div class="space-y-8">
+                    <!-- Título da Página -->
+                    <h1 class="text-3xl font-extrabold text-gray-900">Dashboard da Turma</h1>
+                    <p class="text-gray-600">Visão geral e ações rápidas para o seu trabalho como representante.</p>
+
+                    <!-- Estatísticas Rápidas (Cards) -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <!-- Card 1: Membros Totais -->
+                        <div class="bg-white p-6 rounded-xl shadow-lg border-t-4 border-indigo-600">
+                            <p class="text-sm font-medium text-gray-500">Membros Totais</p>
+                            <p class="text-3xl font-bold text-gray-900 mt-1">45</p>
+                            <p class="text-sm text-green-600 mt-2">+3 novos esta semana</p>
+                        </div>
+                        
+                        <!-- Card 2: Mensagens Enviadas -->
+                        <div class="bg-white p-6 rounded-xl shadow-lg border-t-4 border-indigo-600">
+                            <p class="text-sm font-medium text-gray-500">Anúncios Enviados</p>
+                            <p class="text-3xl font-bold text-gray-900 mt-1">12</p>
+                            <p class="text-sm text-gray-600 mt-2">Último: "Prova de Cálculo", há 2 dias</p>
+                        </div>
+
+                        <!-- Card 3: Feedback Pendente -->
+                        <div class="bg-white p-6 rounded-xl shadow-lg border-t-4 border-indigo-600">
+                            <p class="text-sm font-medium text-gray-500">Feedback Pendente</p>
+                            <p class="text-3xl font-bold text-gray-900 mt-1">5</p>
+                            <p class="text-sm text-yellow-600 mt-2">Requer sua atenção.</p>
+                        </div>
+                    </div>
+
+                    <!-- Ações Rápidas -->
+                    <div class="bg-white p-6 rounded-xl shadow-lg">
+                        <h2 class="text-xl font-bold text-gray-900 mb-4">Ações Rápidas</h2>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <button onclick="changeView('send-message')" class="btn-primary flex flex-col items-center justify-center p-4 bg-indigo-100 text-indigo-700 rounded-xl hover:bg-indigo-200">
+                                <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 20h9M18 10V5a2 2 0 00-2-2H8a2 2 0 00-2 2v5a2 2 0 012 2v5a2 2 0 002 2h2m-4-8a1 1 0 011-1h2a1 1 0 011 1m-4 0v2m4-2v2"></path></svg>
+                                <span class="text-sm font-medium">Enviar Mensagem</span>
+                            </button>
+                            <button onclick="changeView('add-contact')" class="btn-primary flex flex-col items-center justify-center p-4 bg-indigo-100 text-indigo-700 rounded-xl hover:bg-indigo-200">
+                                <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path></svg>
+                                <span class="text-sm font-medium">Adicionar Contato</span>
+                            </button>
+                            <button onclick="showMessage('Redirecionando para Gerenciamento de Turmas...')" class="btn-primary flex flex-col items-center justify-center p-4 bg-indigo-100 text-indigo-700 rounded-xl hover:bg-indigo-200">
+                                <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-5a2 2 0 00-2-2H9.842a5 5 0 01-4.9-2.756L2 10m9 0a4 4 0 11-8 0 4 4 0 018 0zm1.968 1.115a3 3 0 113.896 3.896M18 13.968a3 3 0 113.896 3.896"></path></svg>
+                                <span class="text-sm font-medium">Gerenciar Membros</span>
+                            </button>
+                             <button onclick="showMessage('Funcionalidade de Calendário em breve!')" class="btn-primary flex flex-col items-center justify-center p-4 bg-indigo-100 text-indigo-700 rounded-xl hover:bg-indigo-200">
+                                <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                <span class="text-sm font-medium">Ver Calendário</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Notificações/Atividade Recente (Tabela Simples) -->
+                    <div class="bg-white p-6 rounded-xl shadow-lg">
+                         <h2 class="text-xl font-bold text-gray-900 mb-4">Atividade Recente</h2>
+                         <ul class="space-y-3">
+                             <li class="p-3 bg-gray-50 rounded-lg flex items-center justify-between">
+                                 <span class="text-gray-700">Novo Feedback Anônimo sobre Horário.</span>
+                                 <span class="text-xs text-indigo-600 font-semibold">4 horas atrás</span>
+                             </li>
+                             <li class="p-3 bg-gray-50 rounded-lg flex items-center justify-between">
+                                 <span class="text-gray-700">Aluno 'Maria Silva' adicionado à turma.</span>
+                                 <span class="text-xs text-indigo-600 font-semibold">1 dia atrás</span>
+                             </li>
+                             <li class="p-3 bg-gray-50 rounded-lg flex items-center justify-between">
+                                 <span class="text-gray-700">Você enviou o anúncio 'Reunião de Turma'.</span>
+                                 <span class="text-xs text-indigo-600 font-semibold">3 dias atrás</span>
+                             </li>
+                         </ul>
+                    </div>
+                </div>
+            `;
+            return getCommonLayout(content);
+        }
+
+        function renderSendMessage() {
+            const content = `
+                <div class="max-w-4xl mx-auto space-y-8">
+                    <h1 class="text-3xl font-extrabold text-gray-900">Enviar Novo Anúncio/Mensagem</h1>
+                    <p class="text-gray-600">Comunique-se de forma rápida e eficiente com seus representados.</p>
+
+                    <form class="bg-white p-8 rounded-xl shadow-lg space-y-6" onsubmit="event.preventDefault(); handleSendMessage();">
+                        
+                        <!-- Campo 1: Destinatários -->
+                        <div>
+                            <label for="recipients" class="block text-sm font-medium text-gray-700">Destinatários</label>
+                            <select id="recipients" name="recipients" class="mt-1 block w-full pl-3 pr-10 py-3 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-lg shadow-sm">
+                                <option>Toda a Turma (45 Membros)</option>
+                                <option>Apenas Subgrupo A</option>
+                                <option>Apenas Representantes de Subturmas</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Campo 2: Assunto -->
+                        <div>
+                            <label for="subject" class="block text-sm font-medium text-gray-700">Assunto</label>
+                            <input type="text" id="subject" name="subject" required
+                                class="mt-1 block w-full px-3 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                                placeholder="Ex: Aviso sobre Prova, Lembrete de Reunião">
+                        </div>
+
+                        <!-- Campo 3: Conteúdo da Mensagem -->
+                        <div>
+                            <label for="message-content" class="block text-sm font-medium text-gray-700">Conteúdo da Mensagem</label>
+                            <textarea id="message-content" name="message-content" rows="8" required
+                                class="mt-1 block w-full px-3 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                                placeholder="Escreva a mensagem completa aqui..."></textarea>
+                        </div>
+
+                        <!-- Botão de Envio -->
+                        <div class="pt-4">
+                            <button type="submit" class="btn-primary w-full flex justify-center py-3 px-4 border border-transparent text-lg font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.263l-7.89 5.263M16 4h4a2 2 0 012 2v12a2 2 0 01-2 2h-4M7 8h10M7 12h10M7 16h10"></path></svg>
+                                Enviar Anúncio
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            return getCommonLayout(content);
+        }
+
+        function handleSendMessage() {
+            // Lógica simulada de envio de mensagem
+            const subject = document.getElementById('subject').value;
+            showMessage(`Mensagem '${subject}' enviada com sucesso para os destinatários selecionados!`);
+            // Limpa o formulário (apenas simulação)
+            document.getElementById('subject').value = '';
+            document.getElementById('message-content').value = '';
+        }
+
+        function renderAddContact() {
+             const content = `
+                <div class="max-w-xl mx-auto space-y-8">
+                    <h1 class="text-3xl font-extrabold text-gray-900">Adicionar Novo Representado</h1>
+                    <p class="text-gray-600">Insira as informações do novo membro da turma.</p>
+
+                    <form class="bg-white p-8 rounded-xl shadow-lg space-y-6" onsubmit="event.preventDefault(); handleAddContact();">
+                        
+                        <!-- Campo 1: Nome Completo -->
+                        <div>
+                            <label for="full-name" class="block text-sm font-medium text-gray-700">Nome Completo</label>
+                            <input type="text" id="full-name" name="full-name" required
+                                class="mt-1 block w-full px-3 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                                placeholder="Nome do Aluno/Membro">
+                        </div>
+                        
+                        <!-- Campo 2: E-mail -->
+                        <div>
+                            <label for="contact-email" class="block text-sm font-medium text-gray-700">Endereço de E-mail</label>
+                            <input type="email" id="contact-email" name="contact-email" required
+                                class="mt-1 block w-full px-3 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                                placeholder="email@exemplo.com">
+                        </div>
+
+                        <!-- Campo 3: Matrícula/ID -->
+                        <div>
+                            <label for="enrollment-id" class="block text-sm font-medium text-gray-700">Matrícula/ID (Opcional)</label>
+                            <input type="text" id="enrollment-id" name="enrollment-id"
+                                class="mt-1 block w-full px-3 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                                placeholder="123456">
+                        </div>
+
+                        <!-- Botão de Envio -->
+                        <div class="pt-4">
+                            <button type="submit" class="btn-primary w-full flex justify-center py-3 px-4 border border-transparent text-lg font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path></svg>
+                                Adicionar Contato
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            return getCommonLayout(content);
+        }
+
+        function handleAddContact() {
+            // Lógica simulada de adição de contato
+            const name = document.getElementById('full-name').value;
+            showMessage(`O novo membro '${name}' foi adicionado com sucesso!`);
+            // Limpa o formulário (apenas simulação)
+            document.getElementById('full-name').value = '';
+            document.getElementById('contact-email').value = '';
+            document.getElementById('enrollment-id').value = '';
+        }
+        
+
+        // --- Renderização Principal ---
+
+        function renderApp() {
+            let content = '';
+            switch (currentView) {
+                case 'dashboard':
+                    content = renderDashboard();
+                    break;
+                case 'send-message':
+                    content = renderSendMessage();
+                    break;
+                case 'add-contact':
+                    content = renderAddContact();
+                    break;
+                default:
+                    // Se a view não for encontrada, retorna ao dashboard
+                    content = renderDashboard();
+                    currentView = 'dashboard';
+            }
+            appContainer.innerHTML = content;
+        }
+
+        // Inicia o aplicativo na tela de Dashboard
+        document.addEventListener('DOMContentLoaded', () => {
+            renderApp();
+        });
+    </script>
+</body>
+</html>

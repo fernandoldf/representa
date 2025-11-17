@@ -42,12 +42,5 @@ def adicionar_aluno():
         return redirect(url_for('dashboard'))
     return render_template('adicionar_aluno.html')
 
-@app.route('/enviar-mensagem', methods=['GET', 'POST'])
-def enviar_mensagem():
-    if request.method == 'POST':
-        flash('Pedido de envio recebido (placeholder)')
-        return redirect(url_for('dashboard'))
-    return render_template('enviar_mensagem.html')
-
 if __name__ == '__main__':
     app.run(debug=True)
