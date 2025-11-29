@@ -20,7 +20,13 @@ Observações importantes:
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 from dotenv import load_dotenv
 from models.usuario import Usuario, Representante, Aluno
-from controle_representantes import adicionar_representante, buscar_representante_por_email
+from controle_representates import (
+    adicionar_representante,
+    buscar_representante_por_email,
+    adicionar_representado_para,
+    atualizar_representado,
+    remover_representado,
+)
 import os
 from functools import wraps
 
@@ -108,15 +114,70 @@ def enviar_mensagem():
 @login_required
 def adicionar_representado():
     usuarioAtivo = get_usuario_ativo()
-    aluno = Aluno(nome=request.form.get('full-name'),
-                  email=request.form.get('contact-email'),
-                  telefone=request.form.get('phone-number'),
-                  representante=usuarioAtivo.nome if usuarioAtivo else None)
-    print(f"Adicionando representado: {aluno}")
-    if aluno.nome is not None and usuarioAtivo:
-        usuarioAtivo.adicionar_aluno(aluno)
-    # validações e lógica de salvamento deverão ser implementadas
-    flash('Representado adicionado (placeholder)')
+    # Use controller/repository to persist the new aluno for the active representante
+    if not usuarioAtivo:
+        flash('Nenhum representante ativo', 'danger')
+        return redirect(url_for('dashboard'))
+
+    nome = request.form.get('full-name')
+    email = request.form.get('contact-email')
+    telefone = request.form.get('phone-number')
+
+    try:
+        result = adicionar_representado_para(usuarioAtivo.email, nome, email, telefone)
+        flash('Representado adicionado com sucesso', 'success')
+    except Exception as e:
+        flash(f'Erro ao adicionar representado: {e}', 'danger')
+    return redirect(url_for('dashboard'))
+
+
+
+@app.route('/representado/edit', methods=['POST'])
+@login_required
+def editar_representado():
+    usuarioAtivo = get_usuario_ativo()
+    if not usuarioAtivo:
+        flash('Nenhum representante ativo', 'danger')
+        return redirect(url_for('dashboard'))
+
+    aluno_id = request.form.get('aluno_id')
+    nome = request.form.get('edit-nome')
+    email = request.form.get('edit-email')
+    telefone = request.form.get('edit-telefone')
+
+    updates = {}
+    if nome:
+        updates['nome'] = nome
+    if email:
+        updates['email'] = email
+    if telefone:
+        updates['telefone'] = telefone
+
+    try:
+        updated = atualizar_representado(usuarioAtivo.email, aluno_id, updates)
+        flash('Representado atualizado com sucesso', 'success')
+    except Exception as e:
+        flash(f'Erro ao atualizar representado: {e}', 'danger')
+    return redirect(url_for('dashboard'))
+
+
+@app.route('/representado/delete', methods=['POST'])
+@login_required
+def deletar_representado():
+    usuarioAtivo = get_usuario_ativo()
+    if not usuarioAtivo:
+        flash('Nenhum representante ativo', 'danger')
+        return redirect(url_for('dashboard'))
+
+    aluno_id = request.form.get('aluno_id')
+    try:
+        removed = remover_representado(usuarioAtivo.email, aluno_id)
+        if removed:
+            flash('Representado removido com sucesso', 'success')
+        else:
+            flash('Representado não encontrado', 'warning')
+    except Exception as e:
+        flash(f'Erro ao remover representado: {e}', 'danger')
     return redirect(url_for('dashboard'))
 
 

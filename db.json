@@ -1,0 +1,64 @@
+{
+  "representantes": [
+    {
+      "id": "r1",
+      "nome": "fernando",
+      "email": "fernandes.fernando@live.com",
+      "telefone": "82982234422",
+      "alunos": [
+        {
+          "id": "a4",
+          "nome": "asdfasdfasd",
+          "email": "fernandes.fernando@live.com",
+          "telefone": "982253939",
+          "data_adicionado": "2025-11-29T11:47:04.953117"
+        },
+        {
+          "id": "a6",
+          "nome": "carlos",
+          "email": "fernando.dias.fernandes@gmail.com",
+          "telefone": "82982253939",
+          "data_adicionado": "2025-11-29T11:47:04.994134"
+        },
+        {
+          "id": "a7",
+          "nome": "fernando",
+          "email": "marcellas@hotmail.com",
+          "telefone": "982253939",
+          "data_adicionado": "2025-11-29T12:46:10.312748"
+        },
+        {
+          "id": "a8",
+          "nome": "marcella",
+          "email": "fernandorldf@gmail.com",
+          "telefone": "82982201010",
+          "data_adicionado": "2025-11-29T12:51:04.876236"
+        }
+      ],
+      "metadata": {
+        "created_at": "2025-11-28T00:00:00Z"
+      }
+    },
+    {
+      "id": "r2",
+      "nome": "andrielli",
+      "email": "andrielli@example.com",
+      "telefone": "82982234423",
+      "alunos": [],
+      "metadata": {
+        "created_at": "2025-11-28T00:00:00Z"
+      }
+    },
+    {
+      "id": "r3",
+      "nome": "victor",
+      "email": "victor@example.com",
+      "telefone": "victor@example.com",
+      "alunos": [],
+      "metadata": {
+        "created_at": "2025-11-28T00:00:00Z"
+      }
+    }
+  ],
+  "next_id": 9
+}

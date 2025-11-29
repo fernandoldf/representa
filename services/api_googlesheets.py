@@ -2,7 +2,7 @@ import requests
 import os
 from datetime import datetime
 from dotenv import load_dotenv
-from victor.usuario import Aluno, Representante
+from models.usuario import Aluno, Representante
 
 
 """Stubs for Google Sheets API integration.
@@ -19,46 +19,45 @@ class API_Sheety:
     def __init__(self):
         self.endpoint = ENDPOINT
         self.headers = headers
-        
-    def adicionar_aluno(self, aluno):
-        add_json = {"dado": {
-                    "data": datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
-                    "nome": aluno.nome,
-                    "eMail": aluno.email,
-                    "telefone": aluno.telefone,
-                    "representante": aluno.representante}
-        }
-        response = requests.post(self.endpoint, json=add_json, headers=headers)
-        if response.status_code == 200 or response.status_code == 201:
-            print("Aluno added successfully")
-            return True
-        else:
-            print(f"Failed to add aluno: {response.status_code}")
-            return False
-
     
-    def buscar_alunos(self, nome=None):
+    def get_alunos_filtered(self, nome=None):
         """Return list of alunos for a given representante from Google Sheets (to be implemented)."""
         if nome is not None:
             self.endpoint = f"{self.endpoint}?filter[representante]={nome}"
         response = requests.get(self.endpoint, headers=self.headers)
+        print(response.json())
         if response.status_code == 200:
-            alunos = []
-            print("Alunos fetched successfully")
-            for dado in response.json().get('dados', []):
-                alunos.append(self.criar_aluno(dado))
-            return alunos
+            return response.json().get('dados', [])
         else:
             print(f"Failed to fetch alunos: {response.status_code}")
-            return []
+            raise Exception("Erro ao buscar alunos do Google Sheets")
 
-    def criar_aluno(self, json_data):
-        return Aluno(
-            nome=json_data.get('nome', ''),
-            email=json_data.get('eMail', ''),
-            telefone=json_data.get('telefone', ''),
-            representante=json_data.get('representante', None)
-        )
+    def buscar_alunos(self, nome=None):
+        """Return list of alunos for a given representante from Google Sheets (to be implemented)."""
+        try:
+            alunos_data = self.get_alunos_filtered(nome)
+            alunos = []
+            print("Alunos fetched successfully")
+            for dado in alunos_data:
+                alunos.append({"nome": dado.get('nome', ''),
+                               "eMail": dado.get('eMail', ''),
+                               "telefone": dado.get('telefone', ''),
+                               "representante": dado.get('representante', '')})
+            return alunos
+        except Exception as e:
+            print(f"Failed to fetch alunos: {e}")
+            return None
+
+    def deletar_aluno(self, aluno_id: str):
+        """Delete an aluno by ID from Google Sheets (to be implemented)."""
+        delete_endpoint = f"{self.endpoint}/{aluno_id}"
+        response = requests.delete(delete_endpoint, headers=self.headers)
+        if response.status_code == 200:
+            print(f"Aluno with ID {aluno_id} deleted successfully from Google Sheets")
+            return True
+        else:
+            print(f"Failed to delete aluno with ID {aluno_id}: {response.status_code}")
+            return False
     
 if __name__ == "__main__":
     # Test fetching alunos

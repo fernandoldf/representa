@@ -95,6 +95,27 @@
             }
         }
 
+        // Toggle inline edit form for a specific aluno id
+        function toggleEdit(alunoId) {
+            const editRow = document.getElementById(`edit-${alunoId}`);
+            if (!editRow) return;
+            editRow.classList.toggle('hidden');
+            // Scroll into view when opened
+            if (!editRow.classList.contains('hidden')) {
+                editRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+
+        // Toggle the add-new-contact form visibility
+        function toggleAddForm() {
+            const addForm = document.getElementById('add-form');
+            if (!addForm) return;
+            addForm.classList.toggle('hidden');
+            if (!addForm.classList.contains('hidden')) {
+                document.getElementById('full-name').focus();
+            }
+        }
+
         function changeView(viewName) {
             currentView = viewName;
             renderApp();
@@ -152,7 +173,7 @@
                             </a>
                             <a href="#" onclick="changeView('add-contact')" class="flex items-center p-3 rounded-xl ${activeClass('add-contact')}">
                                 <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path></svg>
-                                Adicionar Representado
+                                Gerenciar Representados
                             </a>
                             <a href="#" onclick="showMessage('Funcionalidade de Feedback em breve!')" class="flex items-center p-3 rounded-xl text-indigo-200 hover:bg-indigo-600">
                                 <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.27a11.954 11.954 0 01-1.29 2.22c-.628.69-1.325 1.255-2.083 1.688m-6.427 0c-.758-.433-1.455-.998-2.083-1.688a11.954 11.954 0 01-1.29-2.22m1.066-1.554a9 9 0 1010.868 0"></path></svg>
@@ -214,7 +235,7 @@
                             </button>
                             <button onclick="changeView('add-contact')" class="btn-primary flex flex-col items-center justify-center p-4 bg-indigo-100 text-indigo-700 rounded-xl hover:bg-indigo-200">
                                 <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path></svg>
-                                <span class="text-sm font-medium">Adicionar Representado</span>
+                                <span class="text-sm font-medium">Gerenciar Representados</span>
                             </button>
                             <button onclick="showMessage('Redirecionando para Gerenciamento de Turmas...')" class="btn-primary flex flex-col items-center justify-center p-4 bg-indigo-100 text-indigo-700 rounded-xl hover:bg-indigo-200">
                                 <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-5a2 2 0 00-2-2H9.842a5 5 0 01-4.9-2.756L2 10m9 0a4 4 0 11-8 0 4 4 0 018 0zm1.968 1.115a3 3 0 113.896 3.896M18 13.968a3 3 0 113.896 3.896"></path></svg>
@@ -297,45 +318,97 @@
         }
 
         function renderAddContact() {
+            // Management view for representados — list all, allow edit/delete and add
             const content = `
-                <div class="max-w-xl mx-auto space-y-8">
-                    <h1 class="text-3xl font-extrabold text-gray-900">Adicionar Novo Representado</h1>
-                    <p class="text-gray-600">Insira as informações do novo membro da turma.</p>
+                <div class="max-w-3xl mx-auto space-y-6">
+                    <h1 class="text-3xl font-extrabold text-gray-900">Gerenciar Representados</h1>
+                    <p class="text-gray-600">Visualize, edite ou remova contatos existentes. Adicione novos no final da lista.</p>
 
-                    <form class="bg-white p-8 rounded-xl shadow-lg space-y-6" method="post" action="{{ url_for('adicionar_representado') }}">
-                        
-                        <!-- Campo 1: Nome Completo -->
-                        <div>
-                            <label for="full-name" class="block text-sm font-medium text-gray-700">Nome Completo</label>
-                            <input type="text" id="full-name" name="full-name" required
-                                class="mt-1 block w-full px-3 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                                placeholder="Nome do Aluno/Membro">
-                        </div>
-                        
-                        <!-- Campo 2: E-mail -->
-                        <div>
-                            <label for="contact-email" class="block text-sm font-medium text-gray-700">Endereço de E-mail</label>
-                            <input type="email" id="contact-email" name="contact-email" required
-                                class="mt-1 block w-full px-3 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                                placeholder="email@exemplo.com">
+                    <div class="bg-white p-6 rounded-xl shadow-lg space-y-4">
+                        <h2 class="text-lg font-semibold text-gray-700">Lista de Representados</h2>
+
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nome</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Telefone</th>
+                                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    {% for aluno in usuarioAtivo.alunos %}
+                                    <tr id="row-{{aluno.email}}">
+                                        <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-900">{{ aluno.nome | capitalize }}</td>
+                                        <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-500">{{ aluno.email }}</td>
+                                        <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-500">{{ aluno.telefone or '-' }}</td>
+                                        <td class="px-6 py-3 whitespace-nowrap text-right text-sm font-medium flex justify-end items-center space-x-2">
+                                            <!-- Edit button toggles an inline edit form -->
+                                            <button onclick="toggleEdit('{{ aluno.id }}')" class="px-3 py-1 rounded-md bg-yellow-500 text-white hover:bg-yellow-600">Editar</button>
+                                            <!-- Delete form submits aluno id to delete route -->
+                                            <form method="post" action="{{ url_for('deletar_representado') }}" onsubmit="return confirm('Confirma remoção deste representado?');">
+                                                <input type="hidden" name="aluno_id" value="{{ aluno.id }}">
+                                                <button type="submit" class="px-3 py-1 rounded-md bg-red-500 text-white hover:bg-red-600">Excluir</button>
+                                            </form>
+                                        </td>
+                                    </tr>
+
+                                    <!-- Inline edit row (hidden by default) -->
+                                    <tr id="edit-{{ aluno.id }}" class="hidden bg-gray-50">
+                                        <td class="px-6 py-3" colspan="4">
+                                            <form method="post" action="{{ url_for('editar_representado') }}" class="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
+                                                <input type="hidden" name="aluno_id" value="{{ aluno.id }}">
+                                                <div>
+                                                    <label class="text-xs text-gray-600">Nome</label>
+                                                    <input name="edit-nome" type="text" value="{{ aluno.nome }}" class="mt-1 block w-full px-3 py-2 border rounded-md" required>
+                                                </div>
+                                                <div>
+                                                    <label class="text-xs text-gray-600">Email</label>
+                                                    <input name="edit-email" type="email" value="{{ aluno.email }}" class="mt-1 block w-full px-3 py-2 border rounded-md" required>
+                                                </div>
+                                                <div>
+                                                    <label class="text-xs text-gray-600">Telefone</label>
+                                                    <input name="edit-telefone" type="text" value="{{ aluno.telefone or '' }}" class="mt-1 block w-full px-3 py-2 border rounded-md">
+                                                </div>
+                                                <div class="md:col-span-3 flex justify-end space-x-2 mt-2">
+                                                    <button type="button" onclick="toggleEdit('{{ aluno.id }}')" class="px-3 py-1 rounded-md border">Cancelar</button>
+                                                    <button type="submit" class="px-3 py-1 rounded-md bg-indigo-600 text-white">Salvar</button>
+                                                </div>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
                         </div>
 
-                        <!-- Campo 3: Telefone -->
-                        <div>
-                            <label for="phone-number" class="block text-sm font-medium text-gray-700">Telefone (Opcional)</label>
-                            <input type="text" id="phone-number" name="phone-number"
-                                class="mt-1 block w-full px-3 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                                placeholder="123456">
-                        </div>
+                        <!-- Add new contato button and inline form -->
+                        <div class="pt-4 border-t mt-4">
+                            <button id="show-add-form" onclick="toggleAddForm()" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">Adicionar novo contato</button>
 
-                        <!-- Botão de Envio -->
-                        <div class="pt-4">
-                            <button type="submit" class="btn-primary w-full flex justify-center py-3 px-4 border border-transparent text-lg font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path></svg>
-                                Adicionar Representado
-                            </button>
+                            <div id="add-form" class="mt-4 hidden">
+                                <form method="post" action="{{ url_for('adicionar_representado') }}" class="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
+                                    <div>
+                                        <label class="text-xs text-gray-600">Nome</label>
+                                        <input id="full-name" name="full-name" type="text" required class="mt-1 block w-full px-3 py-2 border rounded-md">
+                                    </div>
+                                    <div>
+                                        <label class="text-xs text-gray-600">Email</label>
+                                        <input id="contact-email" name="contact-email" type="email" required class="mt-1 block w-full px-3 py-2 border rounded-md">
+                                    </div>
+                                    <div>
+                                        <label class="text-xs text-gray-600">Telefone</label>
+                                        <input id="phone-number" name="phone-number" type="text" class="mt-1 block w-full px-3 py-2 border rounded-md">
+                                    </div>
+                                    <div class="md:col-span-3 flex justify-end mt-2">
+                                        <button type="button" onclick="toggleAddForm()" class="px-3 py-1 rounded-md border mr-2">Cancelar</button>
+                                        <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-md">Adicionar</button>
+                                    </div>
+                                </form>
+                            </div>
                         </div>
-                    </form>
+                    </div>
                 </div>
             `;
             return getCommonLayout(content);
