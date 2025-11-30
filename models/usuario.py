@@ -1,4 +1,3 @@
-
 class Usuario:
     def __init__(self, nome: str, email: str, telefone: str):
         self.nome = nome.lower()

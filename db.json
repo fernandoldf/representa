@@ -137,7 +137,27 @@
       "metadata": {
         "created_at": "2025-11-30T13:00:57.931053"
       }
+    },
+    {
+      "id": "r25",
+      "nome": "roberta justus",
+      "email": "roberta@gmail.com",
+      "telefone": "823748917234",
+      "senha": "926dc6fb2c9459c7f480ab99b7213678b68c8bd77532d6d00973dc433d993ae5",
+      "alunos": [
+        {
+          "id": "a26",
+          "nome": "victor crb",
+          "email": "victor@crb.com.br",
+          "telefone": "298734892134",
+          "data_adicionado": "2025-11-30T21:02:28.822238"
+        }
+      ],
+      "mensagens": [],
+      "metadata": {
+        "created_at": "2025-11-30T21:01:25.365565"
+      }
     }
   ],
-  "next_id": 25
+  "next_id": 27
 }
