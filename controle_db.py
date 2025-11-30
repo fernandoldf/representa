@@ -1,11 +1,11 @@
-"""JSON-backed repository for `representados.json`.
+"""Repositório baseado em JSON para `representados.json`.
 
-This class provides simple atomic load/save and CRUD helpers to treat
-`representados.json` as a lightweight persistent store.
+Esta classe fornece operações simples de carga/salvamento atômico e auxiliares CRUD para tratar
+`representados.json` como um armazenamento persistente leve.
 
-Notes:
-- Uses a file lock to avoid concurrent write corruption (requires filelock).
-- Writes are atomic (writes to temporary file then os.replace).
+Notas:
+- Usa um bloqueio de arquivo para evitar corrupção por escrita simultânea (requer filelock).
+- As escritas são atômicas (escreve em arquivo temporário depois os.replace).
 """
 from __future__ import annotations
 
@@ -17,7 +17,7 @@ from typing import Optional
 
 try:
     from filelock import FileLock
-except Exception:  # pragma: no cover - optional dependency
+except Exception:  # pragma: no cover - dependência opcional
     FileLock = None  # type: ignore
 
 
@@ -33,20 +33,20 @@ class JSONRepository:
 
     def _acquire_lock(self):
         if FileLock is None:
-            # No-op lock: filelock not installed — caller must ensure single writer
+            # Lock inoperante: filelock não instalado — chamador deve garantir escrita única
             return None
         return FileLock(self.lock_path, timeout=5)
 
     def load(self) -> dict:
-        """Load the JSON file. Ensures file exists first."""
+        """Carrega o arquivo JSON. Garante que o arquivo existe primeiro."""
         self._ensure_file()
         with open(self.path, 'r', encoding='utf-8') as f:
             return json.load(f)
 
     def save(self, data: dict) -> None:
-        """Save data atomically.
+        """Salva dados atomicamente.
 
-        Writes to a temporary file then os.replace to avoid partial writes.
+        Escreve em um arquivo temporário e depois usa os.replace para evitar escritas parciais.
         """
         dirn = os.path.dirname(self.path) or '.'
         fd, tmp = tempfile.mkstemp(dir=dirn)
@@ -61,7 +61,7 @@ class JSONRepository:
                 except Exception:
                     pass
 
-    # --- Repository operations ---
+    # --- Operações do Repositório ---
     def get_representante_by_email(self, email: str) -> Optional[dict]:
         data = self.load()
         email = email.lower() if email else email
@@ -70,14 +70,14 @@ class JSONRepository:
                 return r
         return None
 
-    def add_representante(self, nome: str, email: str, telefone: Optional[str] = None) -> dict:
-        """Add a new representante and return the created dict."""
+    def add_representante(self, nome: str, email: str, telefone: Optional[str] = None, senha: Optional[str] = None, mensagens: Optional[list] = None) -> dict:
+        """Adiciona um novo representante e retorna o dicionário criado."""
         lock = self._acquire_lock()
         if lock:
             lock.acquire()
         try:
             data = self.load()
-            # simple duplicate check
+            # verificação simples de duplicata
             if self.get_representante_by_email(email) is not None:
                 raise ValueError('representante already exists')
 
@@ -88,7 +88,9 @@ class JSONRepository:
                 'nome': nome.lower() if isinstance(nome, str) else nome,
                 'email': email.lower() if isinstance(email, str) else email,
                 'telefone': telefone,
+                'senha': senha,
                 'alunos': [],
+                'mensagens': [],    
                 'metadata': {'created_at': datetime.utcnow().isoformat()}
             }
             data.setdefault('representantes', []).append(rep)
@@ -99,7 +101,7 @@ class JSONRepository:
                 lock.release()
 
     def add_aluno(self, representante_email: str, nome: str, email: Optional[str] = None, telefone: Optional[str] = None) -> dict:
-        """Append an aluno to the representante identified by email. Returns aluno dict."""
+        """Anexa um aluno ao representante identificado por email. Retorna o dicionário do aluno."""
         lock = self._acquire_lock()
         if lock:
             lock.acquire()
@@ -130,7 +132,7 @@ class JSONRepository:
                 lock.release()
 
     def remove_aluno(self, representante_email: str, aluno_email: str) -> bool:
-        """Remove an aluno by email from the given representante. Returns True if removed."""
+        """Remove um aluno por email do representante dado. Retorna True se removido."""
         lock = self._acquire_lock()
         if lock:
             lock.acquire()
@@ -156,7 +158,7 @@ class JSONRepository:
                 lock.release()
         
     def check_aluno_exists(self, representante_email: str, aluno_email: str) -> bool:
-        """Check if an aluno with given email exists under the representante."""
+        """Verifica se um aluno com o email dado existe sob o representante."""
         data = self.load()
         for r in data.get('representantes', []):
             if r.get('email', '').lower() == representante_email.lower():
@@ -166,7 +168,7 @@ class JSONRepository:
         return False
     
     def get_alunos_of_representante(self, representante_email: str) -> list[dict]:
-        """Return list of alunos for the given representante email."""
+        """Retorna lista de alunos para o email do representante dado."""
         data = self.load()
         for r in data.get('representantes', []):
             if r.get('email', '').lower() == representante_email.lower():
@@ -174,7 +176,7 @@ class JSONRepository:
         return []
 
     def update_aluno(self, representante_email: str, aluno_id: str, updates: dict) -> dict:
-        """Update an aluno by id for the given representante and return updated aluno."""
+        """Atualiza um aluno por id para o representante dado e retorna o aluno atualizado."""
         lock = self._acquire_lock()
         if lock:
             lock.acquire()
@@ -191,7 +193,7 @@ class JSONRepository:
             alunos = rep.setdefault('alunos', [])
             for a in alunos:
                 if a.get('id') == aluno_id:
-                    # Only allow updating known fields
+                    # Permitir apenas atualização de campos conhecidos
                     for k, v in updates.items():
                         if k in ('nome', 'email', 'telefone'):
                             a[k] = v.lower() if isinstance(v, str) and k in ('nome','email') else v
@@ -203,7 +205,7 @@ class JSONRepository:
                 lock.release()
 
     def remove_aluno_by_id(self, representante_email: str, aluno_id: str) -> bool:
-        """Remove an aluno by id. Returns True if removed."""
+        """Remove um aluno por id. Retorna True se removido."""
         lock = self._acquire_lock()
         if lock:
             lock.acquire()
@@ -227,3 +229,32 @@ class JSONRepository:
         finally:
             if lock:
                 lock.release()
+
+    def adicionar_mensagem(self, representante_email: str, mensagem: dict) -> None:
+        lock = self._acquire_lock()
+        if lock:
+            lock.acquire()
+        try:
+            data = self.load()
+            rep = None
+            for r in data.get('representantes', []):
+                if r.get('email', '').lower() == representante_email.lower():
+                    rep = r
+                    break
+            if rep is None:
+                raise KeyError('representante not found')
+
+            mensagens = rep.setdefault('mensagens', [])
+            mensagens.append(mensagem)
+            self.save(data)
+        finally:
+            if lock:
+                lock.release()
+    
+    def get_mensagens_of_representante(self, representante_email: str) -> list[dict]:
+        """Retorna lista de mensagens para o email do representante dado."""
+        data = self.load()
+        for r in data.get('representantes', []):
+            if r.get('email', '').lower() == representante_email.lower():
+                return r.get('mensagens', [])
+        return []

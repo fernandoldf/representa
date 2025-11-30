@@ -1,44 +1,53 @@
 """
 server.py
 ----------
-Aplicação Flask mínima usada como interface web para gerenciar representantes
-e seus representados (alunos). Este arquivo expõe rotas de login, logout,
-dashboard e ações simples (enviar mensagem, adicionar representado).
+Aplicação Flask principal que atua como o backend e interface web do sistema Representa.
 
-Comentários neste arquivo seguem estilo de desenvolvedor sênior: explicam
-decisões arquiteturais, pontos de extensão e riscos de segurança.
+Este arquivo é responsável por:
+1.  Configurar a aplicação Flask e suas extensões.
+2.  Definir as rotas (URLs) acessíveis pelos usuários.
+3.  Gerenciar a autenticação e sessão dos usuários.
+4.  Interagir com a camada de serviço (`RepresentanteService`) para processar dados.
+5.  Renderizar os templates HTML para o frontend.
 
-Observações importantes:
-- A autenticação aqui é mínima e serve apenas como scaffold; para produção
-  substitua pela validação contra um banco de dados e adicione proteção contra
-  força bruta / CSRF.
-- Sessões são armazenadas usando o mecanismo de sessão do Flask (cookies
-  assinados). A chave secreta (`FLASK_SECRET_KEY`) deve ser forte em
-  produção e não comitada no repositório.
+Arquitetura:
+- **Padrão MVC (Model-View-Controller)**: Embora simplificado, este arquivo atua principalmente como o 'Controller', recebendo requisições, chamando a lógica de negócios (Service) e retornando a visualização (Templates).
+- **Autenticação**: Utiliza sessões baseadas em cookies assinados do Flask. É uma abordagem simples e eficaz para aplicações menores, mas em produção deve ser reforçada com HTTPS e flags de segurança nos cookies.
+- **Persistência**: Delega a persistência de dados para o `RepresentanteService`, mantendo o código da rota limpo e focado no fluxo HTTP.
+
+Segurança:
+- As rotas protegidas são decoradas com `@login_required` para garantir que apenas usuários autenticados tenham acesso.
+- Senhas são armazenadas como hashes SHA-256 (nota: para produção, recomenda-se algoritmos mais robustos como bcrypt ou Argon2).
 """
 
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 from dotenv import load_dotenv
 from models.usuario import Usuario, Representante, Aluno
-from controle_representates import (
-    adicionar_representante,
-    buscar_representante_por_email,
-    adicionar_representado_para,
-    atualizar_representado,
-    remover_representado,
-)
+from services.controle_representates import service
+import hashlib
 import os
 from functools import wraps
 
+# Carrega variáveis de ambiente do arquivo .env (ex: chaves secretas, configurações de email)
 load_dotenv()
 
 app = Flask(__name__)
+
+# Configuração da chave secreta para assinar cookies de sessão.
+# Em produção, isso DEVE ser uma string aleatória longa e mantida em segredo.
 app.secret_key = os.getenv('FLASK_SECRET_KEY', 'dev-secret')
-app.config['PERMANENT_SESSION_LIFETIME'] = 3600  # 1 hora
-app.config['SESSION_COOKIE_HTTPONLY'] = True
+
+# Configurações de Sessão
+app.config['PERMANENT_SESSION_LIFETIME'] = 3600  # Sessão expira em 1 hora de inatividade
+app.config['SESSION_COOKIE_HTTPONLY'] = True     # Previne acesso ao cookie via JavaScript (proteção XSS)
 
 def login_required(f):
-    """Decorator para verificar se o usuário está logado."""
+    """
+    Decorator personalizado para proteger rotas que exigem autenticação.
+    
+    Verifica se a chave 'user_email' está presente na sessão. Se não estiver,
+    redireciona o usuário para a página de login com uma mensagem de aviso.
+    """
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if 'user_email' not in session:
@@ -49,39 +58,96 @@ def login_required(f):
 
 
 def get_usuario_ativo():
-    """Recupera o usuário ativo da session."""
+    """
+    Helper para recuperar o objeto Representante completo do usuário logado atualmente.
+    
+    Retorna:
+        Representante: Objeto com todos os dados do usuário (alunos, mensagens, etc).
+        None: Se não houver usuário logado.
+    """
     if 'user_email' in session:
-        return buscar_representante_por_email(session['user_email'])
+        return service.retornar_representante(session['user_email'])
     return None
 
 @app.route('/')
 def home():
-    """Página inicial pública.
-
-    Simplesmente renderiza um template `home.html`. Em aplicações maiores
-    pode conter uma landing page ou redirecionar para `/login`.
+    """
+    Rota da Página Inicial (Landing Page).
+    
+    Acessível publicamente. Serve como ponto de entrada para novos usuários ou
+    para quem não está logado.
     """
     return render_template('home.html')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    """
+    Rota de Login.
+    
+    GET: Renderiza o formulário de login.
+    POST: Processa as credenciais enviadas.
+          - Busca o usuário pelo email.
+          - Compara o hash da senha fornecida com o hash armazenado.
+          - Se sucesso, cria a sessão e redireciona para o dashboard.
+    """
     if request.method == 'POST':
         email = request.form.get('email')
-        usuarioAtivo = buscar_representante_por_email(email)
-        if usuarioAtivo is None:
+        dados_user = service.buscar_representante_por_email(email)
+        
+        if dados_user is None:
             flash('Usuário não encontrado')
             return redirect(url_for('login'))
+            
+        senha = request.form.get('password')
+        # Hash da senha para comparação segura
+        senha_hash = hashlib.sha256(senha.encode()).hexdigest()
         
-        # Armazenar na session (em vez de variável global)
+        if dados_user.get('senha') != senha_hash:
+            flash('Senha incorreta')
+            return redirect(url_for('login'))
+            
+        # Login bem-sucedido: Armazena identificadores na sessão
         session['user_email'] = email
-        session['user_name'] = usuarioAtivo.nome
-        session.permanent = True  # Mantém logado enquanto o navegador está aberto
+        session['user_name'] = dados_user.get('name')
+        session.permanent = True  # Ativa a expiração da sessão configurada anteriormente
         
         return redirect(url_for('dashboard'))
+        
     return render_template('login.html')
+
+@app.route('/signup', methods=['GET', 'POST'])
+def signup():
+    """
+    Rota de Cadastro de Novos Representantes.
+    
+    Permite que novos representantes criem uma conta no sistema.
+    """
+    if request.method == 'POST':
+        nome = request.form.get('nome')
+        email = request.form.get('email')
+        telefone = request.form.get('telefone')
+        senha = request.form.get('password')
+        
+        # Hash da senha antes de salvar no banco de dados
+        senha_hash = hashlib.sha256(senha.encode()).hexdigest()
+        
+        try:
+            service.adicionar_representante(nome, email, telefone, senha_hash)
+            flash('Representante cadastrado com sucesso. Faça login.')
+            return redirect(url_for('login'))
+        except Exception as e:
+            flash(f'Erro ao cadastrar representante: {e}', 'danger')
+            return redirect(url_for('signup'))
+            
+    return render_template('signup.html')
 
 @app.route('/logout')
 def logout():
+    """
+    Rota de Logout.
+    
+    Limpa a sessão do usuário, efetivamente desconectando-o, e redireciona para o login.
+    """
     session.clear()
     flash('Você foi desconectado com sucesso.', 'info')
     return redirect(url_for('login'))
@@ -89,32 +155,71 @@ def logout():
 @app.route('/dashboard')
 @login_required
 def dashboard():
+    """
+    Rota do Painel Principal (Dashboard).
+    
+    Exibe a visão geral para o representante logado, incluindo:
+    - Estatísticas (total de alunos, mensagens).
+    - Gráficos de desempenho.
+    - Ações rápidas.
+    
+    Esta rota agrega dados de várias fontes (Service, ChartService) para passar
+    um contexto rico para o template renderizar.
+    """
     usuarioAtivo = get_usuario_ativo()
     if usuarioAtivo:
-        usuarioAtivo.atualizar_alunos()
         print(f"Renderizando dashboard para: {usuarioAtivo.nome}")
+        
+        # --- Agregação de Dados para Gráficos ---
+        # Chama o serviço especializado em gráficos para processar os dados brutos
+        # e transformá-los em formatos consumíveis pelo Chart.js (listas de labels e valores).
+        from services.chart_service import get_dashboard_chart_data
+        chart_data = get_dashboard_chart_data(usuarioAtivo)
+
+        return render_template('dashboard.html', 
+                               usuarioAtivo=usuarioAtivo,
+                               msg_chart_labels=chart_data['msg_chart_labels'],
+                               msg_chart_values=chart_data['msg_chart_values'],
+                               student_chart_labels=chart_data['student_chart_labels'],
+                               student_chart_values=chart_data['student_chart_values'],
+                               new_students_last_7_days=chart_data['new_students_last_7_days'])
+    
+    # Fallback caso algo estranho aconteça e não haja usuário ativo (embora o decorator previna)
     return render_template('dashboard.html', usuarioAtivo=usuarioAtivo)
 
 @app.route('/enviar-mensagem', methods=['POST'])
 @login_required
 def enviar_mensagem():
+    """
+    Rota para Envio de Mensagens (Anúncios).
+    
+    Recebe os dados do formulário de envio de mensagem e delega para o serviço
+    de email realizar o disparo real.
+    """
     usuarioAtivo = get_usuario_ativo()
     assunto = request.form.get('subject')
     corpo = request.form.get('message-content')
+    
     try:
-        if usuarioAtivo and usuarioAtivo.enviar_email(assunto, corpo):
+        if usuarioAtivo and service.enviar_mensagem(usuarioAtivo, assunto, corpo):
             flash('Mensagem enviada com sucesso')
         else:
             flash('Falha ao enviar mensagem')
     except Exception as e:
         flash(f"Erro ao enviar mensagem: {e}")
+        
     return redirect(url_for('dashboard'))
 
 @app.route('/adicionar-representado', methods=['POST'])
 @login_required
 def adicionar_representado():
+    """
+    Rota para Adicionar Manualmente um Representado (Aluno).
+    
+    Permite que o representante cadastre um aluno diretamente pelo dashboard.
+    """
     usuarioAtivo = get_usuario_ativo()
-    # Use controller/repository to persist the new aluno for the active representante
+    
     if not usuarioAtivo:
         flash('Nenhum representante ativo', 'danger')
         return redirect(url_for('dashboard'))
@@ -124,17 +229,21 @@ def adicionar_representado():
     telefone = request.form.get('phone-number')
 
     try:
-        result = adicionar_representado_para(usuarioAtivo.email, nome, email, telefone)
+        service.adicionar_aluno(usuarioAtivo.email, nome, email, telefone)
         flash('Representado adicionado com sucesso', 'success')
     except Exception as e:
         flash(f'Erro ao adicionar representado: {e}', 'danger')
+        
     return redirect(url_for('dashboard'))
-
-
 
 @app.route('/representado/edit', methods=['POST'])
 @login_required
 def editar_representado():
+    """
+    Rota para Editar Dados de um Representado.
+    
+    Atualiza informações (nome, email, telefone) de um aluno existente.
+    """
     usuarioAtivo = get_usuario_ativo()
     if not usuarioAtivo:
         flash('Nenhum representante ativo', 'danger')
@@ -145,6 +254,7 @@ def editar_representado():
     email = request.form.get('edit-email')
     telefone = request.form.get('edit-telefone')
 
+    # Constrói dicionário apenas com os campos que foram preenchidos
     updates = {}
     if nome:
         updates['nome'] = nome
@@ -154,16 +264,22 @@ def editar_representado():
         updates['telefone'] = telefone
 
     try:
-        updated = atualizar_representado(usuarioAtivo.email, aluno_id, updates)
+        service.atualizar_aluno(usuarioAtivo.email, aluno_id, updates)
         flash('Representado atualizado com sucesso', 'success')
     except Exception as e:
         flash(f'Erro ao atualizar representado: {e}', 'danger')
+        
     return redirect(url_for('dashboard'))
 
 
 @app.route('/representado/delete', methods=['POST'])
 @login_required
 def deletar_representado():
+    """
+    Rota para Remover um Representado.
+    
+    Exclui permanentemente um aluno da lista do representante.
+    """
     usuarioAtivo = get_usuario_ativo()
     if not usuarioAtivo:
         flash('Nenhum representante ativo', 'danger')
@@ -171,15 +287,44 @@ def deletar_representado():
 
     aluno_id = request.form.get('aluno_id')
     try:
-        removed = remover_representado(usuarioAtivo.email, aluno_id)
+        removed = service.remover_aluno(usuarioAtivo.email, aluno_id)
         if removed:
             flash('Representado removido com sucesso', 'success')
         else:
             flash('Representado não encontrado', 'warning')
     except Exception as e:
         flash(f'Erro ao remover representado: {e}', 'danger')
+        
     return redirect(url_for('dashboard'))
 
 
+@app.route('/registrar', methods=['GET', 'POST'])
+def registrar_aluno():
+    """
+    Rota Pública de Auto-Cadastro de Alunos.
+    
+    Permite que alunos se cadastrem sozinhos, escolhendo seu representante
+    a partir de uma lista. Útil para divulgar um link e captar contatos.
+    """
+    if request.method == 'POST':
+        nome = request.form.get('nome')
+        email = request.form.get('email')
+        telefone = request.form.get('telefone')
+        representante_email = request.form.get('representante_email')
+
+        try:
+            service.adicionar_aluno(representante_email, nome, email, telefone)
+            flash('Cadastro realizado com sucesso! Aguarde contato do seu representante.', 'success')
+        except Exception as e:
+            flash(f'Erro ao realizar cadastro: {e}', 'danger')
+        return redirect(url_for('registrar_aluno'))
+    
+    # GET request: Renderiza o formulário público com a lista de representantes disponíveis
+    representantes = service.listar_representantes()
+    return render_template('public_form.html', representantes=representantes)
+
+
 if __name__ == '__main__':
+    # Inicia o servidor de desenvolvimento do Flask
+    # debug=True permite reload automático em alterações de código e mensagens de erro detalhadas
     app.run(debug=True)

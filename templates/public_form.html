@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Representa | Cadastro de Aluno</title>
+    <!-- Carrega o Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Configuração de fonte padrão "Inter" e cores */
+        :root {
+            --primary-color: #4f46e5;
+            /* Indigo-600 */
+            --secondary-color: #818cf8;
+            /* Indigo-400 */
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            /* Slate-50 */
+        }
+
+        .btn-primary {
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+
+<body class="antialiased flex flex-col min-h-screen">
+
+    <!-- Navbar Simplificada -->
+    <header class="bg-white shadow-sm">
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M17 20h5v-5a2 2 0 00-2-2H9.842a5 5 0 01-4.9-2.756L2 10m9 0a4 4 0 11-8 0 4 4 0 018 0zm1.968 1.115a3 3 0 113.896 3.896M18 13.968a3 3 0 113.896 3.896">
+                    </path>
+                </svg>
+                <span class="text-xl font-bold text-gray-800">Representa</span>
+            </div>
+            <div>
+                <a href="{{ url_for('home') }}" class="text-sm font-medium text-gray-600 hover:text-indigo-600">Voltar
+                    para Home</a>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Tela de Cadastro -->
+    <div class="flex-grow flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-md w-full space-y-8 bg-white p-10 rounded-xl shadow-2xl border border-gray-100">
+            <div class="text-center">
+                <h2 class="mt-2 text-3xl font-extrabold text-gray-900">
+                    Cadastre-se na sua Turma
+                </h2>
+                <p class="mt-2 text-sm text-gray-600">
+                    Preencha seus dados e selecione seu representante para receber comunicados.
+                </p>
+            </div>
+            <form class="mt-8 space-y-6" action="{{ url_for('registrar_aluno') }}" method="post">
+                <div class="rounded-md shadow-sm -space-y-px">
+                    <div>
+                        <label for="nome" class="sr-only">Nome Completo</label>
+                        <input id="nome" name="nome" type="text" required
+                            class="appearance-none rounded-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-lg focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                            placeholder="Nome Completo">
+                    </div>
+                    <div>
+                        <label for="email" class="sr-only">E-mail</label>
+                        <input id="email" name="email" type="email" required
+                            class="appearance-none rounded-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                            placeholder="E-mail de Contato">
+                    </div>
+                    <div>
+                        <label for="telefone" class="sr-only">Telefone</label>
+                        <input id="telefone" name="telefone" type="tel" required
+                            class="appearance-none rounded-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                            placeholder="Telefone (WhatsApp)">
+                    </div>
+                    <div>
+                        <label for="representante" class="sr-only">Selecione seu Representante</label>
+                        <select id="representante" name="representante_email" required
+                            class="appearance-none rounded-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-lg focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-white">
+                            <option value="" disabled selected>Selecione seu Representante</option>
+                            {% for rep in representantes %}
+                            <option value="{{ rep.email }}">{{ rep.nome|title }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <button type="submit"
+                        class="btn-primary group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        Confirmar Cadastro
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <footer class="bg-gray-50 py-6 text-center text-gray-500 text-sm">
+        &copy; 2025 Representa.
+    </footer>
+
+</body>
+
+</html>
