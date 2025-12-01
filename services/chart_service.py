@@ -80,7 +80,7 @@ def get_dashboard_chart_data(usuario_ativo):
         if aluno.data_adicionado:
             try:
                 # Tratar formato ISO
-                dt = datetime.fromisoformat(aluno.data_adicionado)
+                dt = datetime.strptime(aluno.data_adicionado, "%d/%m/%Y %H:%M:%S")
                 if dt >= seven_days_ago:
                     new_students_last_7_days += 1
             except ValueError:
