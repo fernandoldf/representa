@@ -285,7 +285,7 @@
                                 </div>
 
                                 <div class="flex items-center space-x-4">
-                                    <span class="text-sm font-medium text-gray-600 hidden sm:inline">Bem-vindo(a), {{ usuarioAtivo.nome.capitalize() }}!</span>
+                                    <span class="text-sm font-medium text-gray-600 hidden sm:inline">Bem-vindo(a), {{ usuarioAtivo.nome | title }}!</span>
                                     <a href="{{url_for('logout')}}" title="Sair" class="text-sm font-semibold p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition duration-150">
                                         Sair
                                     </a>
@@ -498,7 +498,7 @@
                         function renderAddContact() {
             // Management view for representados — list all, allow edit/delete and add
             const content = `
-                        <div class="max-w-3xl mx-auto space-y-6">
+                        <div class="max-w-4xl mx-auto space-y-6">
                             <h1 class="text-3xl font-extrabold text-gray-900">Gerenciar Representados</h1>
                             <p class="text-gray-600">Visualize, edite ou remova contatos existentes. Adicione novos no final da lista.</p>
 
@@ -518,7 +518,7 @@
                                         <tbody class="bg-white divide-y divide-gray-200">
                                             {% for aluno in usuarioAtivo.alunos %}
                                             <tr id="row-{{aluno.email}}">
-                                                <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-900">{{ aluno.nome | capitalize }}</td>
+                                                <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-900">{{ aluno.nome | title }}</td>
                                                 <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-500">{{ aluno.email }}</td>
                                                 <td class="px-6 py-3 whitespace-nowrap text-sm text-gray-500">{{ aluno.telefone or '-' }}</td>
                                                 <td class="px-6 py-3 whitespace-nowrap text-right text-sm font-medium flex justify-end items-center space-x-2">

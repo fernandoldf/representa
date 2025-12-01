@@ -91,7 +91,7 @@ class JSONRepository:
                 'senha': senha,
                 'alunos': [],
                 'mensagens': [],    
-                'metadata': {'created_at': datetime.utcnow().isoformat()}
+                'metadata': {'created_at': datetime.now().strftime("%d/%m/%Y %H:%M:%S")}
             }
             data.setdefault('representantes', []).append(rep)
             self.save(data)
@@ -122,7 +122,7 @@ class JSONRepository:
                 'nome': nome.lower() if isinstance(nome, str) else nome,
                 'email': email.lower() if isinstance(email, str) and email else None,
                 'telefone': telefone,
-                'data_adicionado': datetime.utcnow().isoformat()
+                'data_adicionado': datetime.now().strftime("%d/%m/%Y %H:%M:%S")
             }
             rep.setdefault('alunos', []).append(aluno)
             self.save(data)

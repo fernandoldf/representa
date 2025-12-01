@@ -17,8 +17,8 @@ def get_dashboard_chart_data(usuario_ativo):
     start_date_str = usuario_ativo.metadata.get('created_at')
     if start_date_str:
         try:
-            # Tratar formato ISO (ex: 2023-10-27T10:00:00.123456)
-            start_date = datetime.fromisoformat(start_date_str)
+            # Tratar formato "dd/mm/YYYY HH:MM:SS" (usado no controle_db.py)
+            start_date = datetime.strptime(start_date_str, "%d/%m/%Y %H:%M:%S")
         except ValueError:
              # Fallback se formato for inesperado
             start_date = datetime.now()
@@ -65,7 +65,8 @@ def get_dashboard_chart_data(usuario_ativo):
         if aluno.data_adicionado:
             try:
                 # Tratar formato ISO (pode conter 'T' ou espaço)
-                dt_str = aluno.data_adicionado.split('T')[0]
+                dt = datetime.strptime(aluno.data_adicionado, "%d/%m/%Y %H:%M:%S")
+                dt_str = dt.strftime("%Y-%m-%d")
                 students_per_day[dt_str] += 1
             except Exception:
                 continue

@@ -16,6 +16,21 @@
           "assunto": "Professor Grafos - Atrasado",
           "corpo": "Pessoal, professor vai chegar atrasado",
           "data": "30/11/2025 09:48:49"
+        },
+        {
+          "assunto": "Prova de Cálculo",
+          "corpo": "Pessoal, o assunto da prova de cálculo será derivada.",
+          "data": "30/11/2025 22:17:00"
+        },
+        {
+          "assunto": "Pessoal, prova semana que vem",
+          "corpo": "hsaikujdhfjklasdhfaujiksdf",
+          "data": "30/11/2025 22:26:00"
+        },
+        {
+          "assunto": "Prova na Próxima Semana",
+          "corpo": "Olá, pessoal! Passando para lembrar que teremos a prova de Matemática na próxima quarta-feira, dia 15.\r\nO conteúdo será do capítulo 4 ao 6.\r\nQualquer dúvida, podem me chamar. Boa semana a todos!",
+          "data": "30/11/2025 22:48:46"
         }
       ],
       "alunos": [
@@ -24,32 +39,39 @@
           "nome": "carlos",
           "email": "fernando.dias.fernandes@gmail.com",
           "telefone": "82982253939",
-          "data_adicionado": "2025-11-30T12:01:16.554056"
+          "data_adicionado": "26/11/2025 23:21:36"
         },
         {
           "id": "a22",
           "nome": "fernando",
           "email": "fernandes.fernando@live.com",
           "telefone": "82982253939",
-          "data_adicionado": "2025-11-30T13:24:47.557260"
+          "data_adicionado": "27/11/2025 23:21:36"
         },
         {
           "id": "a23",
           "nome": "marcella",
           "email": "marcellas@hotmail.com",
           "telefone": "7289137489213",
-          "data_adicionado": "2025-11-30T13:47:15.076413"
+          "data_adicionado": "27/11/2025 23:21:36"
         },
         {
           "id": "a24",
           "nome": "victor",
           "email": "victor@gmail.com",
           "telefone": "2879134792134",
-          "data_adicionado": "2025-11-30T13:47:43.232153"
+          "data_adicionado": "28/11/2025 23:21:36"
+        },
+        {
+          "id": "a29",
+          "nome": "fernando fernandes",
+          "email": "fernando.dias.fernandes@gmail.com",
+          "telefone": "82982253939",
+          "data_adicionado": "30/11/2025 23:21:36"
         }
       ],
       "metadata": {
-        "created_at": "2025-11-28T00:00:00Z"
+        "created_at": "25/11/2025 23:21:36"
       }
     },
     {
@@ -61,7 +83,7 @@
       "mensagens": [],
       "alunos": [],
       "metadata": {
-        "created_at": "2025-11-28T00:00:00Z"
+        "created_at": "26/11/2025 23:21:36"
       }
     },
     {
@@ -81,7 +103,7 @@
         }
       ],
       "metadata": {
-        "created_at": "2025-11-28T00:00:00Z"
+        "created_at": "27/11/2025 23:21:36"
       }
     },
     {
@@ -93,7 +115,7 @@
       "alunos": [],
       "mensagens": [],
       "metadata": {
-        "created_at": "2025-11-30T11:29:32.380642"
+        "created_at": "28/11/2025 05:21:36"
       }
     },
     {
@@ -108,7 +130,7 @@
           "nome": "test student",
           "email": "student@test.com",
           "telefone": "111222333",
-          "data_adicionado": "2025-11-30T12:07:38.966948"
+          "data_adicionado": "28/11/2025 10:21:36"
         }
       ],
       "mensagens": [
@@ -123,7 +145,7 @@
         }
       ],
       "metadata": {
-        "created_at": "2025-11-30T11:55:19.799548"
+        "created_at": "28/11/2025 10:21:36"
       }
     },
     {
@@ -135,7 +157,7 @@
       "alunos": [],
       "mensagens": [],
       "metadata": {
-        "created_at": "2025-11-30T13:00:57.931053"
+        "created_at": "27/11/2025 10:21:36"
       }
     },
     {
@@ -150,14 +172,60 @@
           "nome": "victor crb",
           "email": "victor@crb.com.br",
           "telefone": "298734892134",
-          "data_adicionado": "2025-11-30T21:02:28.822238"
+          "data_adicionado": "28/11/2025 10:21:36"
         }
       ],
       "mensagens": [],
       "metadata": {
-        "created_at": "2025-11-30T21:01:25.365565"
+        "created_at": "26/11/2025 10:21:36"
+      }
+    },
+    {
+      "id": "r27",
+      "nome": "pedro marques",
+      "email": "pedro@gmail.com",
+      "telefone": "82999723132",
+      "senha": "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92",
+      "alunos": [
+        {
+          "id": "a28",
+          "nome": "fernando fernandes",
+          "email": "fernandes.fernando@live.com",
+          "telefone": "82982253939",
+          "data_adicionado": "30/11/2025 23:10:36"
+        }
+      ],
+      "mensagens": [
+        {
+          "assunto": "Prova Hoje",
+          "corpo": "Bora.",
+          "data": "30/11/2025 23:13:13"
+        }
+      ],
+      "metadata": {
+        "created_at": "30/11/2025 10:21:36"
+      }
+    },
+    {
+      "id": "r30",
+      "nome": "marcella soares",
+      "email": "marcella@hotmail.com",
+      "telefone": "82982253939",
+      "senha": "04c10bc62d25ff9f3cf6f23a1864fb4269165ff14d2c547113d2ccf50fc52eea",
+      "alunos": [
+        {
+          "id": "a32",
+          "nome": "fernando fernandes",
+          "email": "fernandes.fernando@live.com",
+          "telefone": "821739482134",
+          "data_adicionado": "30/11/2025 23:25:24"
+        }
+      ],
+      "mensagens": [],
+      "metadata": {
+        "created_at": "30/11/2025 23:21:36"
       }
     }
   ],
-  "next_id": 27
+  "next_id": 33
 }

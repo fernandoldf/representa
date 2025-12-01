@@ -175,6 +175,7 @@ def dashboard():
         # e transformá-los em formatos consumíveis pelo Chart.js (listas de labels e valores).
         from services.chart_service import get_dashboard_chart_data
         chart_data = get_dashboard_chart_data(usuarioAtivo)
+        print(chart_data['student_chart_values'])
 
         return render_template('dashboard.html', 
                                usuarioAtivo=usuarioAtivo,
